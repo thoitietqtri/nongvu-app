@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ADMIN — ĐĂNG BẢN TIN NÔNG VỤ</title>
+  <style>
+    :root{--bg:#0b1220;--card:#0f172a;--txt:#e2e8f0;--muted:#94a3b8;--pri:#22c55e;--danger:#ef4444;--grid:#1f2937;--radius:14px;--shadow:0 10px 30px -14px rgba(0,0,0,.6)}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 system-ui,Segoe UI,Roboto}
+    .wrap{max-width:1100px;margin:24px auto;padding:0 12px}
+    h1{font-size:28px;margin:8px 0 16px}
+    .panel{background:var(--card);border:1px solid var(--grid);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--grid);background:#0b1220;color:var(--txt)}
+    label{display:block;margin:8px 0 6px;color:var(--muted)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .btn{display:inline-block;padding:10px 12px;border-radius:10px;border:1px solid var(--grid);text-decoration:none;color:var(--txt);background:#111827}
+    .btn.primary{background:var(--pri);color:#04130b;border:none}
+    .btn.danger{background:var(--danger);border:none}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid var(--grid);padding:10px;font-size:14px}
+    th{color:var(--muted);text-align:left}
+    .muted{color:var(--muted)}
+    .actions{display:flex;gap:8px}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔐 Admin — Đăng/Sửa/Xóa bản tin</h1>
+
+  <!-- Đăng nhập -->
+  <div id="auth" class="panel">
+    <div class="row">
+      <div><label>Email</label><input id="email" placeholder="admin@qtri.vn" /></div>
+      <div><label>Mật khẩu</label><input id="password" type="password" placeholder="••••••••" /></div>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button class="btn primary" id="btnLogin">Đăng nhập</button>
+      <button class="btn" id="btnLogout" style="display:none">Đăng xuất</button>
+      <span id="authState" class="muted"></span>
+    </div>
+  </div>
+
+  <!-- Form đăng bản tin -->
+  <div id="formPanel" class="panel" style="display:none">
+    <h3>Tạo / Cập nhật bản tin</h3>
+    <div class="row">
+      <div><label>Tiêu đề</label><input id="title" /></div>
+      <div><label>Ngày phát hành</label><input id="date" type="date" /></div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Chu kỳ</label>
+        <select id="frequency">
+          <option value="monthly" selected>Hàng tháng</option>
+          <option value="bimonthly">Hai tháng</option>
+          <option value="daily">Hàng ngày/khẩn</option>
+          <option value="alert">Cảnh báo</option>
+        </select>
+      </div>
+      <div>
+        <label>Trạng thái</label>
+        <select id="is_active">
+          <option value="true" selected>Hiển thị công khai</option>
+          <option value="false">Ẩn</option>
+        </select>
+      </div>
+    </div>
+
+    <label>Mô tả ngắn</label>
+    <textarea id="summary" rows="3" placeholder="Tóm tắt nội dung nổi bật (tùy chọn)"></textarea>
+
+    <div class="row">
+      <div><label>File bản tin (.docx hoặc .pdf)</label><input id="fileDoc" type="file" accept=".docx,.pdf" /></div>
+      <div><label>File bảng số liệu (.xlsx hoặc .pdf)</label><input id="fileData" type="file" accept=".xlsx,.pdf" /></div>
+    </div>
+
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button class="btn primary" id="btnSave">Lưu (thêm mới)</button>
+      <button class="btn" id="btnReset">Reset</button>
+      <span id="saveState" class="muted"></span>
+    </div>
+  </div>
+
+  <!-- Danh sách -->
+  <div id="listPanel" class="panel" style="display:none">
+    <h3>Danh sách bản tin</h3>
+    <table>
+      <thead><tr><th>Ngày</th><th>Tiêu đề</th><th>Chu kỳ</th><th>Tệp</th><th>Hiển thị</th><th></th></tr></thead>
+      <tbody id="tbl"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // ===== Supabase (đọc/ghi) =====
+  const SUPABASE_URL = "https://cegorn.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcHFxYm5hb3h5cXZ5Y3luZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4MDQ4ODUsImV4cCI6MjA3NTM4MDg4NX0.GE0YNYgkVfsKT3iD9-jDm46PUIzkDtZFPP9Ec4iRcFA"; // <-- dán key anon vào đây
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ===== Helpers =====
+  const fmtDate = d => new Date(d).toLocaleDateString('vi-VN');
+  const yyyymm = (dateStr) => { const d = dateStr ? new Date(dateStr) : new Date(); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}`; };
+  const slug = s => (s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+
+  const els = {
+    auth: document.getElementById('auth'),
+    login: document.getElementById('btnLogin'),
+    logout: document.getElementById('btnLogout'),
+    email: document.getElementById('email'),
+    password: document.getElementById('password'),
+    authState: document.getElementById('authState'),
+    formPanel: document.getElementById('formPanel'),
+    listPanel: document.getElementById('listPanel'),
+    title: document.getElementById('title'),
+    date: document.getElementById('date'),
+    frequency: document.getElementById('frequency'),
+    is_active: document.getElementById('is_active'),
+    summary: document.getElementById('summary'),
+    fileDoc: document.getElementById('fileDoc'),
+    fileData: document.getElementById('fileData'),
+    btnSave: document.getElementById('btnSave'),
+    btnReset: document.getElementById('btnReset'),
+    saveState: document.getElementById('saveState'),
+    tbl: document.getElementById('tbl'),
+  };
+
+  // ===== Auth flow =====
+  sb.auth.onAuthStateChange((_event, session) => {
+    const signedIn = !!session;
+    els.authState.textContent = signedIn ? `Đã đăng nhập: ${session.user.email}` : 'Chưa đăng nhập';
+    els.logout.style.display = signedIn ? 'inline-block' : 'none';
+    els.formPanel.style.display = signedIn ? 'block' : 'none';
+    els.listPanel.style.display = signedIn ? 'block' : 'none';
+    if (signedIn) { loadList(); }
+  });
+
+  els.login.onclick = async () => {
+    const { error } = await sb.auth.signInWithPassword({
+      email: els.email.value.trim(),
+      password: els.password.value.trim()
+    });
+    if (error) alert(error.message);
+  };
+  els.logout.onclick = async () => { await sb.auth.signOut(); };
+
+  // ===== Upload helper =====
+  async function uploadIfAny(file, folder, baseName) {
+    if (!file) return null;
+    const ext = file.name.split('.').pop().toLowerCase();
+    const path = `${folder}/${baseName}.${ext}`;
+    const { error } = await sb.storage.from('bulletins').upload(path, file, { upsert:true, cacheControl:'3600' });
+    if (error) throw error;
+    const { data: pub } = sb.storage.from('bulletins').getPublicUrl(path);
+    return pub.publicUrl;
+  }
+
+  // ===== Create =====
+  async function saveBulletin() {
+    try {
+      els.saveState.textContent = 'Đang lưu…';
+      const title = els.title.value.trim();
+      const published_on = els.date.value || new Date().toISOString().slice(0,10);
+      const frequency = els.frequency.value;
+      const is_active = els.is_active.value === 'true';
+      const summary = els.summary.value.trim();
+      if (!title) return alert('Nhập tiêu đề');
+
+      const folder = `${yyyymm(published_on)}/${slug(title)||'ban-tin'}`;
+      const [doc_url, data_url] = await Promise.all([
+        uploadIfAny(els.fileDoc.files[0], folder, 'main'),
+        uploadIfAny(els.fileData.files[0], folder, 'data'),
+      ]);
+
+      const payload = { title, published_on, frequency, is_active, summary };
+      if (doc_url)  payload.doc_url = doc_url;
+      if (data_url) payload.data_url = data_url;
+
+      const { error } = await sb.from('bulletins').insert(payload);
+      if (error) throw error;
+
+      els.saveState.textContent = 'Đã lưu ✓';
+      resetForm(); loadList();
+    } catch (e) {
+      console.error(e);
+      els.saveState.textContent = 'Lỗi lưu';
+      alert(e.message || 'Lỗi không xác định');
+    } finally {
+      setTimeout(()=> els.saveState.textContent='', 1500);
+    }
+  }
+
+  // ===== Read/List =====
+  async function loadList() {
+    const { data, error } = await sb.from('bulletins').select('*').order('published_on',{ascending:false}).limit(200);
+    if (error) { console.error(error); return; }
+    els.tbl.innerHTML = '';
+    for (const r of data) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${fmtDate(r.published_on)}</td>
+        <td>${r.title}</td>
+        <td>${r.frequency||''}</td>
+        <td>${r.doc_url? `<a href="${r.doc_url}" target="_blank">bản tin</a>`:''}${r.data_url? ` · <a href="${r.data_url}" target="_blank">số liệu</a>`:''}</td>
+        <td>${r.is_active ? 'Hiển thị' : '<span class="muted">Ẩn</span>'}</td>
+        <td class="actions">
+          <button class="btn" data-act="toggle" data-id="${r.id}" data-active="${r.is_active}">${r.is_active?'Ẩn':'Hiện'}</button>
+          <button class="btn danger" data-act="del" data-id="${r.id}">Xóa</button>
+        </td>
+      `;
+      els.tbl.appendChild(tr);
+    }
+  }
+
+  // ===== Update / Delete (nhanh gọn) =====
+  document.getElementById('tbl').addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button'); if (!btn) return;
+    const id = btn.getAttribute('data-id');
+    const act = btn.getAttribute('data-act');
+    if (act === 'del') {
+      if (!confirm('Xóa bản tin này?')) return;
+      const { error } = await sb.from('bulletins').delete().eq('id', id);
+      if (error) return alert(error.message);
+      loadList();
+    } else if (act === 'toggle') {
+      const active = btn.getAttribute('data-active') === 'true';
+      const { error } = await sb.from('bulletins').update({ is_active: !active }).eq('id', id);
+      if (error) return alert(error.message);
+      loadList();
+    }
+  });
+
+  function resetForm(){
+    els.title.value=''; els.summary.value=''; els.fileDoc.value=''; els.fileData.value='';
+    els.date.value = new Date().toISOString().slice(0,10);
+    els.frequency.value='monthly'; els.is_active.value='true';
+  }
+  els.btnSave.onclick = saveBulletin;
+  els.btnReset.onclick = resetForm;
+  els.date.value = new Date().toISOString().slice(0,10);
+</script>
+</body>
+</html>

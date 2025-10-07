@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BẢN TIN NÔNG VỤ — CÔNG KHAI</title>
+  <style>
+    :root{--bg:#f6f8ff;--card:#fff;--txt:#0f172a;--muted:#64748b;--pri:#1d4ed8;--grid:#e2e8f0;--shadow:0 10px 30px -14px rgba(2,6,23,.25);--radius:14px}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 system-ui,Segoe UI,Roboto}
+    .wrap{max-width:1100px;margin:24px auto;padding:0 12px}
+    h1{font-size:28px;margin:8px 0 16px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+    select,input[type="month"],input[type="text"]{padding:10px 12px;border:1px solid var(--grid);border-radius:10px;background:#fff}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+    .card{background:var(--card);border:1px solid var(--grid);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:8px}
+    .muted{color:var(--muted);font-size:13px}
+    .btn{display:inline-block;padding:10px 12px;border-radius:10px;border:1px solid var(--grid);text-decoration:none}
+    .btn.primary{background:var(--pri);color:#fff;border-color:transparent}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    .empty{padding:24px;text-align:center;border:2px dashed var(--grid);border-radius:12px;background:#fff}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🧑‍🌾 Bản tin nông vụ — Công khai</h1>
+    <a class="btn" href="./admin.html">Liên kết quản trị</a>
+  </header>
+
+  <div class="bar">
+    <label>Loại: 
+      <select id="frequency">
+        <option value="">Tất cả</option>
+        <option value="daily">Hàng ngày/khẩn</option>
+        <option value="bimonthly">Hai tháng</option>
+        <option value="monthly" selected>Hàng tháng</option>
+        <option value="alert">Cảnh báo</option>
+      </select>
+    </label>
+    <label>Tháng: <input type="month" id="monthPicker"></label>
+    <input id="search" type="text" placeholder="Tìm tiêu đề..." />
+    <button class="btn" id="btnClear">Xóa lọc</button>
+  </div>
+
+  <div id="list" class="grid"></div>
+  <div id="empty" class="empty" style="display:none">Chưa có bản tin phù hợp bộ lọc.</div>
+</div>
+
+<script>
+  // ===== Supabase (CHỈ ĐỌC) =====
+  const SUPABASE_URL = "https://cegorn.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcHFxYm5hb3h5cXZ5Y3luZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4MDQ4ODUsImV4cCI6MjA3NTM4MDg4NX0.GE0YNYgkVfsKT3iD9-jDm46PUIzkDtZFPP9Ec4iRcFA"; // <-- dán key anon vào đây
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const els = {
+    list: document.getElementById('list'),
+    empty: document.getElementById('empty'),
+    frequency: document.getElementById('frequency'),
+    month: document.getElementById('monthPicker'),
+    search: document.getElementById('search'),
+    clear: document.getElementById('btnClear'),
+  };
+
+  async function fetchBulletins() {
+    let q = sb.from('bulletins').select('*').eq('is_active', true)
+      .order('published_on', { ascending: false }).limit(500);
+
+    const freq = els.frequency.value;
+    if (freq) q = q.eq('frequency', freq);
+
+    const m = els.month.value; // "YYYY-MM"
+    if (m) {
+      const [y, mo] = m.split('-');
+      const start = `${y}-${mo}-01`;
+      const next = new Date(+y, +mo, 1);
+      const end = `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}-01`;
+      q = q.gte('published_on', start).lt('published_on', end);
+    }
+
+    const { data, error } = await q;
+    if (error) { console.error(error); return []; }
+
+    const kw = els.search.value.trim().toLowerCase();
+    return kw ? data.filter(r => (r.title||'').toLowerCase().includes(kw)) : data;
+  }
+
+  function render(items) {
+    els.list.innerHTML = '';
+    if (!items.length) { els.empty.style.display = 'block'; return; }
+    els.empty.style.display = 'none';
+
+    for (const it of items) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const dateStr = new Date(it.published_on).toLocaleDateString('vi-VN');
+      card.innerHTML = `
+        <div class="muted">${dateStr} · ${it.frequency || ''}</div>
+        <div style="font-weight:700">${it.title}</div>
+        ${it.summary ? `<div>${it.summary}</div>` : ''}
+        <div class="row">
+          ${it.doc_url ? `<a class="btn primary" href="${it.doc_url}" target="_blank">Xem/Tải bản tin</a>` : ''}
+          ${it.data_url ? `<a class="btn" href="${it.data_url}" target="_blank">Tải bảng số liệu</a>` : ''}
+        </div>
+      `;
+      els.list.appendChild(card);
+    }
+  }
+
+  async function reload(){ render(await fetchBulletins()); }
+
+  els.frequency.addEventListener('change', reload);
+  els.month.addEventListener('change', reload);
+  els.search.addEventListener('input', ()=> { clearTimeout(window._t); window._t = setTimeout(reload,200); });
+  els.clear.addEventListener('click', ()=>{ els.frequency.value=''; els.month.value=''; els.search.value=''; reload(); });
+
+  reload();
+</script>
+</body>
+</html>
