@@ -3,34 +3,78 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CEGORN - TRUNG TÂM NGHIÊN CỨU QUẢN TRỊ TÀI NGUYÊN VÙNG CAO - BẢN TIN NÔNG VỤ</title>
+  <title>TTNC QTTNVC - CEGORN | BẢN TIN NÔNG VỤ</title>
   <style>
-    :root{--bg:#f6f8ff;--card:#fff;--txt:#0f172a;--muted:#64748b;--pri:#1d4ed8;--grid:#e2e8f0;--shadow:0 10px 30px -14px rgba(2,6,23,.25);--radius:14px}
-    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 system-ui,Segoe UI,Roboto}
-    .wrap{max-width:1100px;margin:24px auto;padding:0 12px}
-    h1{font-size:28px;margin:8px 0 16px}
-    header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-    .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
-    select,input[type="month"],input[type="text"]{padding:10px 12px;border:1px solid var(--grid);border-radius:10px;background:#fff}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-    .card{background:var(--card);border:1px solid var(--grid);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:8px}
-    .muted{color:var(--muted);font-size:13px}
-    .btn{display:inline-block;padding:10px 12px;border-radius:10px;border:1px solid var(--grid);text-decoration:none}
+    :root{
+      --bg:#f5f7ff; --card:#fff; --txt:#0f172a; --muted:#64748b; --pri:#4f46e5;
+      --grid:#e2e8f0; --shadow:0 10px 30px -14px rgba(2,6,23,.2); --radius:14px;
+      --border-strong:#000;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 system-ui,Segoe UI,Roboto}
+
+    .wrap{max-width:1400px;margin:18px auto;padding:0 12px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    h1{font-size:28px;margin:0;display:flex;gap:8px;align-items:center}
+    .admin-link{display:inline-block;padding:10px 14px;border-radius:12px;background:#f5f3ff;border:1px solid var(--grid);text-decoration:none;color:#4338ca}
+
+    .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0 14px}
+    select,input[type="month"],input[type="text"],button{padding:10px 12px;border:1px solid var(--grid);border-radius:12px;background:#fff}
+    .btn{cursor:pointer}
     .btn.primary{background:var(--pri);color:#fff;border-color:transparent}
+
+    /* SPLIT LAYOUT */
+    .split{
+      display:grid;grid-template-columns:420px 1fr;gap:0;
+      height:calc(100vh - 170px); /* header + bar chiếm khoảng ~170px */
+    }
+    .pane{
+      background:var(--card);
+      overflow:auto;                /* CHO PHÉP CẢ DỌC & NGANG */
+      border:4px solid var(--border-strong); /* viền đen dày như ảnh */
+      box-shadow:var(--shadow);
+    }
+    .pane + .pane{border-left:0}     /* đường chia chung ở giữa */
+    .left{padding:10px}
+    .right{padding:0}
+
+    /* LIST */
+    .item{border:1px solid var(--grid);border-radius:12px;padding:12px;margin-bottom:12px;background:#fff}
+    .item:hover{outline:2px solid #c7d2fe;cursor:pointer}
+    .muted{color:var(--muted);font-size:13px}
+    .title{font-weight:700;margin:4px 0 6px;word-break:break-word}
     .row{display:flex;gap:8px;flex-wrap:wrap}
-    .empty{padding:24px;text-align:center;border:2px dashed var(--grid);border-radius:12px;background:#fff}
+    .link{display:inline-block;padding:8px 10px;border-radius:10px;border:1px solid var(--grid);text-decoration:none}
+    .link.primary{background:var(--pri);color:#fff;border-color:transparent}
+
+    /* VIEWER */
+    .viewer-wrap{min-width:800px;min-height:600px;height:100%;width:100%;}
+    .docframe{width:100%;height:100%;border:0;display:block}
+    .placeholder{height:100%;display:flex;align-items:center;justify-content:center;text-align:center}
+    .placeholder h2{margin:0 0 8px}
+    .placeholder p{color:#b91c1c;font-weight:700}
+
+    /* Responsive: co cột trái khi màn hình hẹp */
+    @media (max-width: 1100px){
+      .split{grid-template-columns:360px 1fr}
+    }
+    @media (max-width: 880px){
+      .split{grid-template-columns:1fr; height:auto}
+      .right{height:70vh}
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>🧑‍🌾TTNC QTTNVC - CEGORN 🧑‍🌾 🧑‍🌾 BẢN TIN NÔNG VỤ 🧑‍🌾</h1>
-    <a class="btn" href="./admin.html">Liên kết quản trị</a>
+    <h1>👨‍🌾🌿 <strong>TTNC QTTNVC - CEGORN</strong> 🌿👨‍🌾 &nbsp;|&nbsp; <span>BẢN TIN NÔNG VỤ</span></h1>
+    <a class="admin-link" href="./admin.html">Liên kết quản trị</a>
   </header>
 
   <div class="bar">
-    <label>Loại: 
+    <label>Loại
       <select id="frequency">
         <option value="">Tất cả</option>
         <option value="daily">Hàng ngày/khẩn</option>
@@ -39,39 +83,87 @@
         <option value="alert">Cảnh báo</option>
       </select>
     </label>
-    <label>Tháng: <input type="month" id="monthPicker"></label>
-    <input id="search" type="text" placeholder="Tìm tiêu đề..." />
+    <label>Tháng <input type="month" id="monthPicker"></label>
+    <input id="search" type="text" placeholder="Tìm tiêu đề..." style="min-width:260px" />
     <button class="btn" id="btnClear">Xóa lọc</button>
   </div>
 
-  <div id="list" class="grid"></div>
-  <div id="empty" class="empty" style="display:none">Chưa có bản tin phù hợp bộ lọc.</div>
+  <div class="split">
+    <!-- LEFT: LIST -->
+    <aside class="pane left">
+      <div id="list"></div>
+    </aside>
+
+    <!-- RIGHT: VIEWER -->
+    <main class="pane right">
+      <div id="viewer" class="viewer-wrap">
+        <div class="placeholder">
+          <div>
+            <h2>HIỂN THỊ NỘI DUNG CỦA FILE KHI CLICK Ở KHUNG BÊN TRÁI</h2>
+            <p>ANH MUỐN CẢ 02 KHUNG ĐỀU CÓ THANH TRƯỢT DỌC VÀ NGANG</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 </div>
 
 <script>
   // ===== Supabase (CHỈ ĐỌC) =====
-  const SUPABASE_URL = "https://bppqqbnaoxyqvycynfaj.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcHFxYm5hb3h5cXZ5Y3luZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4MDQ4ODUsImV4cCI6MjA3NTM4MDg4NX0.GE0YNYgkVfsKT3iD9-jDm46PUIzkDtZFPP9Ec4iRcFA"; // <-- dán key anon vào đây
+  const SUPABASE_URL = "https://<PROJECT-REF>.supabase.co";   // ← thay bằng URL thật (Settings → API → Project URL)
+  const SUPABASE_ANON_KEY = "<ANON_KEY>";                      // ← dán anon key
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // ===== DOM =====
   const els = {
     list: document.getElementById('list'),
-    empty: document.getElementById('empty'),
+    viewer: document.getElementById('viewer'),
     frequency: document.getElementById('frequency'),
     month: document.getElementById('monthPicker'),
     search: document.getElementById('search'),
     clear: document.getElementById('btnClear'),
   };
 
-  async function fetchBulletins() {
-    let q = sb.from('bulletins').select('*').eq('is_active', true)
-      .order('published_on', { ascending: false }).limit(500);
+  // ===== Utils =====
+  const fmtDate = d => new Date(d).toLocaleDateString('vi-VN');
+  const fileName = (url) => {
+    try {
+      const p = new URL(url);
+      const seg = p.pathname.split('/').filter(Boolean);
+      return decodeURIComponent(seg[seg.length-1] || '');
+    } catch { return url; }
+  };
+  const isPdf = (u) => /\.pdf(\?|#|$)/i.test(u);
+  const isOffice = (u) => /\.(doc|docx|xls|xlsx|ppt|pptx)(\?|#|$)/i.test(u);
 
+  function showInViewer(url){
+    if(!url){ els.viewer.innerHTML = '<div class="placeholder"><div><h2>Không có tệp để hiển thị</h2></div></div>'; return; }
+    let html = '';
+    if (isPdf(url)){
+      // PDF nhúng trực tiếp (có thanh cuộn riêng)
+      html = `<iframe class="docframe" src="${url}#view=FitH&toolbar=1&navpanes=1"></iframe>`;
+    } else if (isOffice(url)){
+      const enc = encodeURIComponent(url);
+      // Office viewer (nhúng, hỗ trợ cuộn)
+      html = `<iframe class="docframe" src="https://view.officeapps.live.com/op/embed.aspx?src=${enc}" referrerpolicy="no-referrer" loading="lazy"></iframe>`;
+      // (Có thể dùng Google Viewer nếu thích: https://docs.google.com/gview?embedded=1&url=${enc})
+    } else {
+      html = `<div class="placeholder"><div>
+                <h2>Không xem trước được định dạng tệp này</h2>
+                <a class="btn primary" href="${url}" target="_blank">Mở/Tải tệp</a>
+              </div></div>`;
+    }
+    els.viewer.innerHTML = html;
+  }
+
+  // ===== Data fetch & render =====
+  async function fetchBulletins() {
+    let q = sb.from('bulletins').select('*').eq('is_active', true).order('published_on', {ascending:false}).limit(500);
     const freq = els.frequency.value;
     if (freq) q = q.eq('frequency', freq);
 
-    const m = els.month.value; // "YYYY-MM"
-    if (m) {
+    const m = els.month.value; // YYYY-MM
+    if (m){
       const [y, mo] = m.split('-');
       const start = `${y}-${mo}-01`;
       const next = new Date(+y, +mo, 1);
@@ -80,41 +172,48 @@
     }
 
     const { data, error } = await q;
-    if (error) { console.error(error); return []; }
+    if (error){ console.error(error); return []; }
 
     const kw = els.search.value.trim().toLowerCase();
-    return kw ? data.filter(r => (r.title||'').toLowerCase().includes(kw)) : data;
+    return kw ? data.filter(r => ((r.title||'') + ' ' + (r.summary||'')).toLowerCase().includes(kw)) : data;
   }
 
-  function render(items) {
+  function render(items){
     els.list.innerHTML = '';
-    if (!items.length) { els.empty.style.display = 'block'; return; }
-    els.empty.style.display = 'none';
-
-    for (const it of items) {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const dateStr = new Date(it.published_on).toLocaleDateString('vi-VN');
-      card.innerHTML = `
+    if (!items.length){
+      els.list.innerHTML = `<div class="item muted">Chưa có bản tin phù hợp bộ lọc.</div>`;
+      return;
+    }
+    for (const it of items){
+      const showTitle = it.title && it.title.trim() ? it.title : (it.doc_url ? fileName(it.doc_url) : 'Bản tin');
+      const dateStr = it.published_on ? fmtDate(it.published_on) : '';
+      const div = document.createElement('div');
+      div.className = 'item';
+      // Card click = xem trong khung
+      div.onclick = () => { if (it.doc_url) showInViewer(it.doc_url); };
+      div.innerHTML = `
         <div class="muted">${dateStr} · ${it.frequency || ''}</div>
-        <div style="font-weight:700">${it.title}</div>
-        ${it.summary ? `<div>${it.summary}</div>` : ''}
+        <div class="title">${showTitle}</div>
+        ${it.summary ? `<div style="margin-bottom:8px">${it.summary}</div>` : ''}
         <div class="row">
-          ${it.doc_url ? `<a class="btn primary" href="${it.doc_url}" target="_blank">Xem/Tải bản tin</a>` : ''}
-          ${it.data_url ? `<a class="btn" href="${it.data_url}" target="_blank">Tải bảng số liệu</a>` : ''}
+          ${it.doc_url ? `<a class="link primary" href="${it.doc_url}" target="_blank" onclick="event.stopPropagation()">Xem/Tải bản tin</a>` : ''}
+          ${it.data_url ? `<a class="link" href="${it.data_url}" target="_blank" onclick="event.stopPropagation()">Tải bảng số liệu</a>` : ''}
+          ${it.doc_url ? `<a class="link" href="#" onclick="event.preventDefault(); event.stopPropagation(); showInViewer('${it.doc_url.replace(/'/g,"%27")}')">Xem trong khung</a>` : ''}
         </div>
       `;
-      els.list.appendChild(card);
+      els.list.appendChild(div);
     }
   }
 
   async function reload(){ render(await fetchBulletins()); }
 
+  // ===== Events =====
   els.frequency.addEventListener('change', reload);
   els.month.addEventListener('change', reload);
-  els.search.addEventListener('input', ()=> { clearTimeout(window._t); window._t = setTimeout(reload,200); });
+  els.search.addEventListener('input', ()=>{ clearTimeout(window._t); window._t=setTimeout(reload,200); });
   els.clear.addEventListener('click', ()=>{ els.frequency.value=''; els.month.value=''; els.search.value=''; reload(); });
 
+  // Init
   reload();
 </script>
 </body>
