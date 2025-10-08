@@ -48,7 +48,7 @@
     .docframe{width:100%;height:100%;border:0;display:block;background:#fff}
     .placeholder{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:#1f2937}
 
-    /* (1) Cho cuộn mượt dừng đúng đầu khung xem khi mobile */
+    /* Cho cuộn mượt dừng đúng đầu khung xem khi mobile */
     #viewerPane{ scroll-margin-top: 12px; }
 
     /* Responsive: mobile xếp chồng 2 khung */
@@ -133,11 +133,16 @@
 
   let currentUrl = null;
 
-  /* (2) Hàm cuộn xuống khung xem nếu đang ở mobile */
+  // Phát hiện in-app & mobile (để fallback PDF)
+  function isInApp() {
+    return /Zalo|FBAN|FBAV|Instagram|Line|TikTok|Zbrowser|OkHttp|wv/i.test(navigator.userAgent);
+  }
+  function isMobile() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(max-width: 880px)').matches;
+  }
   function scrollToViewerIfMobile() {
     if (window.matchMedia('(max-width: 880px)').matches) {
-      document.getElementById('viewerPane')
-        .scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('viewerPane').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
 
@@ -149,34 +154,63 @@
       return;
     }
 
-    // Bỏ chọn cũ
     document.querySelectorAll('.item').forEach(el=>el.classList.remove('selected'));
 
-    if (isPdf(url)){
-      // PDF nhúng trực tiếp (nhiều trình duyệt mobile vẫn hỗ trợ)
+    if (isPdf(url)) {
+      // Mobile/in-app → dùng Google Viewer luôn
+      if (isMobile() || isInApp()) {
+        const enc = encodeURIComponent(url);
+        els.viewer.innerHTML = `<iframe class="docframe" src="https://docs.google.com/gview?embedded=1&url=${enc}" referrerpolicy="no-referrer"></iframe>`;
+        scrollToViewerIfMobile();
+        return;
+      }
+      // Desktop: thử viewer gốc, nếu 2s không load thì fallback sang Google Viewer
       const src = `${url}#toolbar=1&navpanes=1&view=FitH`;
-      els.viewer.innerHTML = `<iframe class="docframe" src="${src}"></iframe>`;
-      scrollToViewerIfMobile();     // (3) Tự cuộn xuống khung xem
-    } else if (isOffice(url)){
-      // DOC/XLS/PPT dùng Office viewer
-      const enc = encodeURIComponent(url);
-      els.viewer.innerHTML = `<iframe class="docframe" src="https://view.officeapps.live.com/op/embed.aspx?src=${enc}" referrerpolicy="no-referrer"></iframe>`;
-      scrollToViewerIfMobile();     // (3)
-    } else if (isImage(url)){
-      els.viewer.innerHTML = `<div style="width:100%;height:100%;overflow:auto"><img src="${url}" style="max-width:100%;height:auto;display:block"/></div>`;
-      scrollToViewerIfMobile();     // (3)
-    } else {
-      els.viewer.innerHTML = `<div class="placeholder"><div>
-        <div style="font-weight:700;margin-bottom:8px">Không xem trước được định dạng này.</div>
-        <a class="btn primary" href="${url}" target="_blank">Mở/Tải tệp</a>
-      </div></div>`;
-      scrollToViewerIfMobile();     // (3)
+      const id = 'pdf_'+Date.now();
+      els.viewer.innerHTML = `<iframe id="${id}" class="docframe" src="${src}"></iframe>`;
+      scrollToViewerIfMobile();
+
+      let loaded = false;
+      const fr = document.getElementById(id);
+      fr.addEventListener('load', ()=> loaded = true, { once:true });
+      setTimeout(()=>{
+        if (!loaded) {
+          const enc = encodeURIComponent(url);
+          els.viewer.innerHTML = `<iframe class="docframe" src="https://docs.google.com/gview?embedded=1&url=${enc}" referrerpolicy="no-referrer"></iframe>`;
+        }
+      }, 2000);
+      return;
     }
+
+    if (isOffice(url)) {
+      const enc = encodeURIComponent(url);
+      els.viewer.innerHTML = `<iframe class="docframe" src="https://view.officeapps.live.com/op/embed.aspx?src=${enc}" referrerpolicy="no-referrer" loading="lazy"></iframe>`;
+      scrollToViewerIfMobile();
+      return;
+    }
+
+    if (isImage(url)) {
+      els.viewer.innerHTML = `<div style="width:100%;height:100%;overflow:auto"><img src="${url}" style="max-width:100%;height:auto;display:block"/></div>`;
+      scrollToViewerIfMobile();
+      return;
+    }
+
+    els.viewer.innerHTML = `<div class="placeholder"><div>
+      <div style="font-weight:700;margin-bottom:8px">Không xem trước được định dạng này.</div>
+      <a class="btn primary" href="${url}" target="_blank">Mở/Tải tệp</a>
+    </div></div>`;
+    scrollToViewerIfMobile();
   }
 
   // ===== Lấy dữ liệu & render danh sách =====
   async function fetchBulletins(){
-    let q = sb.from('bulletins').select('*').eq('is_active', true).order('published_on', {ascending:false}).limit(500);
+    let q = sb.from('bulletins')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })   // ⇐ MỚI: sắp theo thời điểm post
+      .order('published_on', { ascending: false }) // phụ: cùng created_at thì ưu tiên ngày phát hành mới
+      .limit(500);
+
     const f = els.frequency.value; if (f) q = q.eq('frequency', f);
     const m = els.month.value; // YYYY-MM
     if (m){
