@@ -9,27 +9,58 @@
     :root{
       --bg:#f6f7ff; --card:#fff; --txt:#0f172a; --muted:#64748b; --pri:#4f46e5;
       --grid:#e2e8f0; --shadow:0 10px 30px -14px rgba(2,6,23,.18);
-      --border:#22c55e;
-      --left-width: 420px;
+      --border:#22c55e;             /* viền xanh khung trái/phải */
+      --left-width: 420px;          /* CHIỀU RỘNG KHUNG TRÁI */
+      --maxw: 1400px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.55 system-ui,Segoe UI,Roboto,Arial}
 
-    .wrap{max-width:1400px;margin:18px auto;padding:0 12px}
-    header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-    h1{margin:0;font-size:28px;font-weight:800;letter-spacing:.3px}
-    .admin-link{padding:10px 14px;border-radius:12px;background:#f3e8ff;border:1px solid #ead8ff;text-decoration:none;color:#6d28d9}
+    /* ===== Sticky centered header ===== */
+    .header{
+      position: sticky; top:0; z-index:1000;
+      background: rgba(246,247,255,.88);
+      border-bottom:1px solid var(--grid);
+      backdrop-filter: saturate(1.1) blur(6px);
+    }
+    .header-inner{
+      max-width: var(--maxw);
+      margin:0 auto; padding:8px 12px;
+      display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px;
+    }
+    .header-title{
+      grid-column:2/3; margin:0; text-align:center;
+      font-weight:800; line-height:1.1; letter-spacing:.3px;
+      font-size: clamp(18px, 2.2vw + .6rem, 44px); /* co giãn mượt theo viewport */
+    }
+    .header-title .emoji{ font-size:1em; line-height:1; vertical-align:-.05em; }
 
+    .admin-link{
+      justify-self:end;
+      padding:10px 14px;border-radius:12px;background:#f3e8ff;border:1px solid #ead8ff;
+      text-decoration:none;color:#6d28d9;white-space:nowrap;
+    }
+    @media (max-width:520px){
+      .admin-link{ padding:8px 10px; text-indent:-9999px; overflow:hidden; width:42px; text-align:center; }
+      .admin-link::after{ content:"⚙️"; font-size:1.1rem; text-indent:0; display:inline-block; width:100%; }
+    }
+
+    /* ===== Main wrap ===== */
+    .wrap{max-width:var(--maxw);margin:12px auto 18px;padding:0 12px}
+
+    /* thanh lọc */
     .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0 10px}
     .bar > *{padding:10px 12px;border:1px solid var(--grid);border-radius:14px;background:#fff}
 
-    .split{display:grid; grid-template-columns: var(--left-width) 1fr; gap:0; height: calc(100vh - 150px);}
+    /* layout 2 khung */
+    .split{display:grid; grid-template-columns: var(--left-width) 1fr; gap:0; height: calc(100vh - 170px);}
     .pane{background:var(--card); border:4px solid var(--border); overflow:auto;}
     .pane + .pane{border-left:0}
     .left{padding:10px}
     .right{display:flex;flex-direction:column;min-width:0}
 
+    /* danh sách bên trái */
     .item{border:1px solid var(--grid);border-radius:12px;background:#fff;padding:12px;margin-bottom:12px}
     .item:hover{outline:2px solid #c7d2fe;cursor:pointer}
     .selected{outline:2px solid #a3e635}
@@ -39,6 +70,7 @@
     .btn{display:inline-block;padding:8px 10px;border-radius:10px;border:1px solid var(--grid);text-decoration:none}
     .btn.primary{background:var(--pri);color:#fff;border-color:transparent}
 
+    /* viewer bên phải */
     .viewer-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--grid);padding:8px;background:#fafafa;position:sticky;top:0;z-index:2}
     .viewer-area{position:relative;flex:1;min-height:300px}
     .docframe{width:100%;height:100%;border:0;display:block;background:#fff}
@@ -47,6 +79,7 @@
     /* cuộn mượt tới khung xem trên mobile */
     #viewerPane{ scroll-margin-top: 12px; }
 
+    /* Mobile xếp chồng 2 khung */
     @media (max-width: 880px){
       .split{grid-template-columns:1fr; height:auto}
       .right{height:70vh}
@@ -56,12 +89,23 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>🧑‍🌾🌿 TTNC QTTNVC - CEGORN 🌿🧑‍🌾 |KTTVQTRI - BẢN TIN NÔNG VỤ🌿🧑‍🌾</h1>
-    <a class="admin-link" href="./admin.html">Liên kết quản trị</a>
-  </header>
 
+<!-- ===== Sticky Header ===== -->
+<div class="header">
+  <div class="header-inner">
+    <div></div>
+    <h1 class="header-title">
+      <span class="emoji">🧑‍🌾</span><span class="emoji">🌿</span>
+      TTNC QTTNVC - CEGORN
+      <span class="emoji">🌿</span><span class="emoji">🧑‍🌾</span>
+      &nbsp;|&nbsp; KTTVQTRI - BẢN TIN NÔNG VỤ
+      <span class="emoji">🌿</span><span class="emoji">🧑‍🌾</span>
+    </h1>
+    <a class="admin-link" href="./admin.html" aria-label="Liên kết quản trị">Liên kết quản trị</a>
+  </div>
+</div>
+
+<div class="wrap">
   <div class="bar">
     <label>Loại
       <select id="frequency">
@@ -78,8 +122,10 @@
   </div>
 
   <div class="split">
+    <!-- KHUNG TRÁI: DANH SÁCH -->
     <aside class="pane left"><div id="list"></div></aside>
 
+    <!-- KHUNG PHẢI: XEM NỘI DUNG -->
     <section class="pane right" id="viewerPane">
       <div class="viewer-toolbar">
         <button class="btn" id="openNew">↗ Mở tab mới</button>
@@ -96,10 +142,12 @@
 </div>
 
 <script>
-  const SUPABASE_URL = "https://bppqqbnaoxyqvycynfaj.supabase.co";   // điền URL dự án
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcHFxYm5hb3h5cXZ5Y3luZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4MDQ4ODUsImV4cCI6MjA3NTM4MDg4NX0.GE0YNYgkVfsKT3iD9-jDm46PUIzkDtZFPP9Ec4iRcFA";                      // dán anon key
+  // ===== Supabase (CHỈ ĐỌC) =====
+  const SUPABASE_URL = "https://bppqqbnaoxyqvycynfaj.supabase.co";   // ← Điền Project URL
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcHFxYm5hb3h5cXZ5Y3luZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4MDQ4ODUsImV4cCI6MjA3NTM4MDg4NX0.GE0YNYgkVfsKT3iD9-jDm46PUIzkDtZFPP9Ec4iRcFA";                      // ← Dán anon key
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // ===== DOM =====
   const els = {
     list: document.getElementById('list'),
     viewer: document.getElementById('viewer'),
@@ -112,6 +160,7 @@
     fileName: document.getElementById('fileName'),
   };
 
+  // ===== Helpers =====
   const fmtDate = d => new Date(d).toLocaleDateString('vi-VN');
   const baseName = (url) => { try { const u = new URL(url); const s = u.pathname.split('/').filter(Boolean); return decodeURIComponent(s[s.length-1]||''); } catch { return url; } };
   const isPdf    = u => /\.pdf(\?|#|$)/i.test(u);
@@ -120,6 +169,7 @@
 
   let currentUrl = null;
 
+  // Phát hiện in-app (Zalo/FB/IG/…) – dùng để fallback PDF
   function isInApp() {
     return /Zalo|FBAN|FBAV|Instagram|Line|TikTok|Zbrowser|OkHttp|wv/i.test(navigator.userAgent);
   }
@@ -129,7 +179,7 @@
     }
   }
 
-  // ---- HIỂN THỊ TRONG KHUNG (đã sửa logic PDF) ----
+  // ===== HIỂN THỊ TRONG KHUNG (PDF có thử-gốc → fallback Google Viewer) =====
   function showInViewer(url){
     currentUrl = url;
     els.fileName.textContent = url ? baseName(url) : '';
@@ -138,25 +188,19 @@
     document.querySelectorAll('.item').forEach(el=>el.classList.remove('selected'));
 
     if (isPdf(url)) {
-      // 1) Nếu đang mở trong app (Zalo/FB/IG/…) → dùng Google Viewer luôn
-      if (isInApp()) {
+      if (isInApp()) { // in-app → gview luôn
         const enc = encodeURIComponent(url);
         els.viewer.innerHTML = `<iframe class="docframe" src="https://docs.google.com/gview?embedded=1&url=${enc}" referrerpolicy="no-referrer"></iframe>`;
-        scrollToViewerIfMobile();
-        return;
+        scrollToViewerIfMobile(); return;
       }
-
-      // 2) Trình duyệt bình thường (kể cả Chrome mobile):
-      //    thử viewer gốc trước, nếu 1.5s không tải được thì fallback Google Viewer
+      // trình duyệt thường: thử iframe gốc, 1.5s không load thì fallback
       const src = `${url}#toolbar=1&navpanes=1&view=FitH`;
       const id = 'pdf_'+Date.now();
       els.viewer.innerHTML = `<iframe id="${id}" class="docframe" src="${src}"></iframe>`;
       scrollToViewerIfMobile();
-
       let loaded = false;
       const fr = document.getElementById(id);
       fr.addEventListener('load', ()=> loaded = true, { once:true });
-
       setTimeout(()=>{
         if (!loaded) {
           const enc = encodeURIComponent(url);
@@ -169,14 +213,12 @@
     if (isOffice(url)) {
       const enc = encodeURIComponent(url);
       els.viewer.innerHTML = `<iframe class="docframe" src="https://view.officeapps.live.com/op/embed.aspx?src=${enc}" referrerpolicy="no-referrer" loading="lazy"></iframe>`;
-      scrollToViewerIfMobile();
-      return;
+      scrollToViewerIfMobile(); return;
     }
 
     if (isImage(url)) {
       els.viewer.innerHTML = `<div style="width:100%;height:100%;overflow:auto"><img src="${url}" style="max-width:100%;height:auto;display:block"/></div>`;
-      scrollToViewerIfMobile();
-      return;
+      scrollToViewerIfMobile(); return;
     }
 
     els.viewer.innerHTML = `<div class="placeholder"><div>
@@ -186,7 +228,7 @@
     scrollToViewerIfMobile();
   }
 
-  // ---- Lấy dữ liệu & render danh sách (sắp theo created_at) ----
+  // ===== Lấy dữ liệu & render danh sách (sắp theo created_at) =====
   async function fetchBulletins(){
     let q = sb.from('bulletins')
       .select('*')
