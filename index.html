@@ -9,8 +9,8 @@
     :root{
       --bg:#f6f7ff; --card:#fff; --txt:#0f172a; --muted:#64748b; --pri:#4f46e5;
       --grid:#e2e8f0; --shadow:0 10px 30px -14px rgba(2,6,23,.18);
-      --border:#22c55e;           /* màu viền xanh */
-      --left-width: 420px;        /* CHIỀU RỘNG KHUNG TRÁI */
+      --border:#22c55e;
+      --left-width: 420px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -21,18 +21,15 @@
     h1{margin:0;font-size:28px;font-weight:800;letter-spacing:.3px}
     .admin-link{padding:10px 14px;border-radius:12px;background:#f3e8ff;border:1px solid #ead8ff;text-decoration:none;color:#6d28d9}
 
-    /* thanh lọc */
     .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0 10px}
     .bar > *{padding:10px 12px;border:1px solid var(--grid);border-radius:14px;background:#fff}
 
-    /* layout 2 khung */
     .split{display:grid; grid-template-columns: var(--left-width) 1fr; gap:0; height: calc(100vh - 150px);}
     .pane{background:var(--card); border:4px solid var(--border); overflow:auto;}
     .pane + .pane{border-left:0}
     .left{padding:10px}
     .right{display:flex;flex-direction:column;min-width:0}
 
-    /* danh sách bên trái */
     .item{border:1px solid var(--grid);border-radius:12px;background:#fff;padding:12px;margin-bottom:12px}
     .item:hover{outline:2px solid #c7d2fe;cursor:pointer}
     .selected{outline:2px solid #a3e635}
@@ -42,16 +39,14 @@
     .btn{display:inline-block;padding:8px 10px;border-radius:10px;border:1px solid var(--grid);text-decoration:none}
     .btn.primary{background:var(--pri);color:#fff;border-color:transparent}
 
-    /* viewer bên phải */
     .viewer-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--grid);padding:8px;background:#fafafa;position:sticky;top:0;z-index:2}
     .viewer-area{position:relative;flex:1;min-height:300px}
     .docframe{width:100%;height:100%;border:0;display:block;background:#fff}
     .placeholder{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:#1f2937}
 
-    /* Cho cuộn mượt dừng đúng đầu khung xem khi mobile */
+    /* cuộn mượt tới khung xem trên mobile */
     #viewerPane{ scroll-margin-top: 12px; }
 
-    /* Responsive: mobile xếp chồng 2 khung */
     @media (max-width: 880px){
       .split{grid-template-columns:1fr; height:auto}
       .right{height:70vh}
@@ -83,10 +78,8 @@
   </div>
 
   <div class="split">
-    <!-- KHUNG TRÁI: DANH SÁCH -->
     <aside class="pane left"><div id="list"></div></aside>
 
-    <!-- KHUNG PHẢI: XEM NỘI DUNG -->
     <section class="pane right" id="viewerPane">
       <div class="viewer-toolbar">
         <button class="btn" id="openNew">↗ Mở tab mới</button>
@@ -103,12 +96,10 @@
 </div>
 
 <script>
-  // ===== Supabase (CHỈ ĐỌC) =====
-  const SUPABASE_URL = "https://bppqqbnaoxyqvycynfaj.supabase.co";   // ← Điền Project URL thật
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcHFxYm5hb3h5cXZ5Y3luZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4MDQ4ODUsImV4cCI6MjA3NTM4MDg4NX0.GE0YNYgkVfsKT3iD9-jDm46PUIzkDtZFPP9Ec4iRcFA";                      // ← Dán anon key
+  const SUPABASE_URL = "https://bppqqbnaoxyqvycynfaj.supabase.co";   // điền URL dự án
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcHFxYm5hb3h5cXZ5Y3luZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4MDQ4ODUsImV4cCI6MjA3NTM4MDg4NX0.GE0YNYgkVfsKT3iD9-jDm46PUIzkDtZFPP9Ec4iRcFA";                      // dán anon key
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ===== DOM =====
   const els = {
     list: document.getElementById('list'),
     viewer: document.getElementById('viewer'),
@@ -121,24 +112,16 @@
     fileName: document.getElementById('fileName'),
   };
 
-  // ===== Helpers =====
   const fmtDate = d => new Date(d).toLocaleDateString('vi-VN');
-  const baseName = (url) => {
-    try { const u = new URL(url); const s = u.pathname.split('/').filter(Boolean); return decodeURIComponent(s[s.length-1]||''); }
-    catch { return url; }
-  };
+  const baseName = (url) => { try { const u = new URL(url); const s = u.pathname.split('/').filter(Boolean); return decodeURIComponent(s[s.length-1]||''); } catch { return url; } };
   const isPdf    = u => /\.pdf(\?|#|$)/i.test(u);
   const isOffice = u => /\.(doc|docx|xls|xlsx|ppt|pptx)(\?|#|$)/i.test(u);
   const isImage  = u => /\.(png|jpg|jpeg|gif|webp)(\?|#|$)/i.test(u);
 
   let currentUrl = null;
 
-  // Phát hiện in-app & mobile (để fallback PDF)
   function isInApp() {
     return /Zalo|FBAN|FBAV|Instagram|Line|TikTok|Zbrowser|OkHttp|wv/i.test(navigator.userAgent);
-  }
-  function isMobile() {
-    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(max-width: 880px)').matches;
   }
   function scrollToViewerIfMobile() {
     if (window.matchMedia('(max-width: 880px)').matches) {
@@ -146,25 +129,25 @@
     }
   }
 
+  // ---- HIỂN THỊ TRONG KHUNG (đã sửa logic PDF) ----
   function showInViewer(url){
     currentUrl = url;
     els.fileName.textContent = url ? baseName(url) : '';
-    if(!url){
-      els.viewer.innerHTML = `<div class="placeholder">Không có tệp để hiển thị</div>`;
-      return;
-    }
+    if(!url){ els.viewer.innerHTML = `<div class="placeholder">Không có tệp để hiển thị</div>`; return; }
 
     document.querySelectorAll('.item').forEach(el=>el.classList.remove('selected'));
 
     if (isPdf(url)) {
-      // Mobile/in-app → dùng Google Viewer luôn
-      if (isMobile() || isInApp()) {
+      // 1) Nếu đang mở trong app (Zalo/FB/IG/…) → dùng Google Viewer luôn
+      if (isInApp()) {
         const enc = encodeURIComponent(url);
         els.viewer.innerHTML = `<iframe class="docframe" src="https://docs.google.com/gview?embedded=1&url=${enc}" referrerpolicy="no-referrer"></iframe>`;
         scrollToViewerIfMobile();
         return;
       }
-      // Desktop: thử viewer gốc, nếu 2s không load thì fallback sang Google Viewer
+
+      // 2) Trình duyệt bình thường (kể cả Chrome mobile):
+      //    thử viewer gốc trước, nếu 1.5s không tải được thì fallback Google Viewer
       const src = `${url}#toolbar=1&navpanes=1&view=FitH`;
       const id = 'pdf_'+Date.now();
       els.viewer.innerHTML = `<iframe id="${id}" class="docframe" src="${src}"></iframe>`;
@@ -173,12 +156,13 @@
       let loaded = false;
       const fr = document.getElementById(id);
       fr.addEventListener('load', ()=> loaded = true, { once:true });
+
       setTimeout(()=>{
         if (!loaded) {
           const enc = encodeURIComponent(url);
           els.viewer.innerHTML = `<iframe class="docframe" src="https://docs.google.com/gview?embedded=1&url=${enc}" referrerpolicy="no-referrer"></iframe>`;
         }
-      }, 2000);
+      }, 1500);
       return;
     }
 
@@ -202,17 +186,17 @@
     scrollToViewerIfMobile();
   }
 
-  // ===== Lấy dữ liệu & render danh sách =====
+  // ---- Lấy dữ liệu & render danh sách (sắp theo created_at) ----
   async function fetchBulletins(){
     let q = sb.from('bulletins')
       .select('*')
       .eq('is_active', true)
-      .order('created_at', { ascending: false })   // ⇐ MỚI: sắp theo thời điểm post
-      .order('published_on', { ascending: false }) // phụ: cùng created_at thì ưu tiên ngày phát hành mới
+      .order('created_at', { ascending: false })
+      .order('published_on', { ascending: false })
       .limit(500);
 
     const f = els.frequency.value; if (f) q = q.eq('frequency', f);
-    const m = els.month.value; // YYYY-MM
+    const m = els.month.value;
     if (m){
       const [y, mo] = m.split('-');
       const start = `${y}-${mo}-01`;
@@ -250,13 +234,11 @@
           ${it.doc_url ? `<a class="btn" href="#" onclick="event.preventDefault();event.stopPropagation();showInViewer('${(it.doc_url||'').replace(/'/g,"%27")}'); this.closest('.item').classList.add('selected')">Xem trong khung</a>` : ''}
         </div>
       `;
-      // click cả card để xem
       card.onclick = ()=>{
         if (it.doc_url){ showInViewer(it.doc_url); document.querySelectorAll('.item').forEach(el=>el.classList.remove('selected')); card.classList.add('selected'); }
       };
       els.list.appendChild(card);
 
-      // Tự mở bản mới nhất (nếu có doc_url) trên desktop
       if (idx===0 && it.doc_url && !window.matchMedia('(max-width: 880px)').matches){
         showInViewer(it.doc_url); card.classList.add('selected');
       }
@@ -265,16 +247,13 @@
 
   async function reload(){ render(await fetchBulletins()); }
 
-  // ===== Sự kiện lọc =====
   els.frequency.addEventListener('change', reload);
   els.month.addEventListener('change', reload);
   els.search.addEventListener('input', ()=>{ clearTimeout(window._t); window._t = setTimeout(reload, 200); });
   els.clear.addEventListener('click', ()=>{ els.frequency.value=''; els.month.value=''; els.search.value=''; reload(); });
 
-  // mở tab mới
   els.openNew.addEventListener('click', ()=>{ if (currentUrl) window.open(currentUrl, '_blank'); });
 
-  // Khởi động
   reload();
 </script>
 </body>
