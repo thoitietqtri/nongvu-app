@@ -3,24 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ADMIN — ĐĂNG BẢN TIN NÔNG VỤ</title>
+  <title>ADMIN — ĐĂNG/SỬA/XÓA BẢN TIN</title>
   <style>
     :root{--bg:#0b1220;--card:#0f172a;--txt:#e2e8f0;--muted:#94a3b8;--pri:#22c55e;--danger:#ef4444;--grid:#1f2937;--radius:14px;--shadow:0 10px 30px -14px rgba(0,0,0,.6)}
-    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 system-ui,Segoe UI,Roboto}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 system-ui,Segoe UI,Roboto}
     .wrap{max-width:1100px;margin:24px auto;padding:0 12px}
     h1{font-size:28px;margin:8px 0 16px}
     .panel{background:var(--card);border:1px solid var(--grid);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
     input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--grid);background:#0b1220;color:var(--txt)}
     label{display:block;margin:8px 0 6px;color:var(--muted)}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .btn{display:inline-block;padding:10px 12px;border-radius:10px;border:1px solid var(--grid);text-decoration:none;color:var(--txt);background:#111827}
+    .btn{display:inline-block;padding:10px 12px;border-radius:10px;border:1px solid var(--grid);text-decoration:none;color:var(--txt);background:#111827;cursor:pointer}
     .btn.primary{background:var(--pri);color:#04130b;border:none}
     .btn.danger{background:var(--danger);border:none}
     table{width:100%;border-collapse:collapse}
-    th,td{border-bottom:1px solid var(--grid);padding:10px;font-size:14px}
+    th,td{border-bottom:1px solid var(--grid);padding:10px;font-size:14px;vertical-align:top}
     th{color:var(--muted);text-align:left}
     .muted{color:var(--muted)}
     .actions{display:flex;gap:8px}
+    a{color:#93c5fd}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -34,7 +35,7 @@
       <div><label>Email</label><input id="email" placeholder="admin@qtri.vn" /></div>
       <div><label>Mật khẩu</label><input id="password" type="password" placeholder="••••••••" /></div>
     </div>
-    <div style="margin-top:10px;display:flex;gap:8px">
+    <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
       <button class="btn primary" id="btnLogin">Đăng nhập</button>
       <button class="btn" id="btnLogout" style="display:none">Đăng xuất</button>
       <span id="authState" class="muted"></span>
@@ -71,11 +72,11 @@
     <textarea id="summary" rows="3" placeholder="Tóm tắt nội dung nổi bật (tùy chọn)"></textarea>
 
     <div class="row">
-      <div><label>File bản tin (.docx hoặc .pdf)</label><input id="fileDoc" type="file" accept=".docx,.pdf" /></div>
-      <div><label>File bảng số liệu (.xlsx hoặc .pdf)</label><input id="fileData" type="file" accept=".xlsx,.pdf" /></div>
+      <div><label>File bản tin (.docx hoặc .pdf)</label><input id="fileDoc" type="file" accept=".doc,.docx,.pdf" /></div>
+      <div><label>File bảng số liệu (.xlsx hoặc .pdf)</label><input id="fileData" type="file" accept=".xls,.xlsx,.pdf" /></div>
     </div>
 
-    <div style="margin-top:10px;display:flex;gap:8px">
+    <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
       <button class="btn primary" id="btnSave">Lưu (thêm mới)</button>
       <button class="btn" id="btnReset">Reset</button>
       <span id="saveState" class="muted"></span>
@@ -86,7 +87,11 @@
   <div id="listPanel" class="panel" style="display:none">
     <h3>Danh sách bản tin</h3>
     <table>
-      <thead><tr><th>Ngày</th><th>Tiêu đề</th><th>Chu kỳ</th><th>Tệp</th><th>Hiển thị</th><th></th></tr></thead>
+      <thead>
+        <tr>
+          <th>Ngày / Thời điểm đăng</th><th>Tiêu đề</th><th>Chu kỳ</th><th>Tệp</th><th>Hiển thị</th><th></th>
+        </tr>
+      </thead>
       <tbody id="tbl"></tbody>
     </table>
   </div>
@@ -94,12 +99,13 @@
 
 <script>
   // ===== Supabase (đọc/ghi) =====
-  const SUPABASE_URL = "https://bppqqbnaoxyqvycynfaj.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcHFxYm5hb3h5cXZ5Y3luZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4MDQ4ODUsImV4cCI6MjA3NTM4MDg4NX0.GE0YNYgkVfsKT3iD9-jDm46PUIzkDtZFPP9Ec4iRcFA"; // <-- dán key anon vào đây
+  const SUPABASE_URL = "https://<PROJECT-REF>.supabase.co";   // <-- ĐỔI cho đúng
+  const SUPABASE_ANON_KEY = "<ANON_KEY>";                      // <-- DÁN key anon
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ===== Helpers =====
   const fmtDate = d => new Date(d).toLocaleDateString('vi-VN');
+  const fmtDateTime = s => new Date(s).toLocaleString('vi-VN', { hour12:false });
   const yyyymm = (dateStr) => { const d = dateStr ? new Date(dateStr) : new Date(); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}`; };
   const slug = s => (s||'').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 
@@ -144,12 +150,24 @@
   };
   els.logout.onclick = async () => { await sb.auth.signOut(); };
 
-  // ===== Upload helper =====
+  // ===== Upload helper (đặt đúng Content-Type) =====
   async function uploadIfAny(file, folder, baseName) {
     if (!file) return null;
     const ext = file.name.split('.').pop().toLowerCase();
     const path = `${folder}/${baseName}.${ext}`;
-    const { error } = await sb.storage.from('bulletins').upload(path, file, { upsert:true, cacheControl:'3600' });
+    const opts = {
+      upsert: true,
+      cacheControl: '3600',
+      contentType: file.type || (
+        ext === 'pdf' ? 'application/pdf' :
+        ext === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' :
+        ext === 'doc'  ? 'application/msword' :
+        ext === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
+        ext === 'xls'  ? 'application/vnd.ms-excel' :
+        undefined
+      )
+    };
+    const { error } = await sb.storage.from('bulletins').upload(path, file, opts);
     if (error) throw error;
     const { data: pub } = sb.storage.from('bulletins').getPublicUrl(path);
     return pub.publicUrl;
@@ -190,18 +208,30 @@
     }
   }
 
-  // ===== Read/List =====
+  // ===== Read/List (mới nhất lên đầu theo created_at) =====
   async function loadList() {
-    const { data, error } = await sb.from('bulletins').select('*').order('published_on',{ascending:false}).limit(200);
+    const { data, error } = await sb
+      .from('bulletins')
+      .select('*')
+      .order('created_at', { ascending: false })    // thời điểm post
+      .order('published_on', { ascending: false })  // phụ
+      .limit(500);
     if (error) { console.error(error); return; }
+
     els.tbl.innerHTML = '';
     for (const r of data) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${fmtDate(r.published_on)}</td>
-        <td>${r.title}</td>
-        <td>${r.frequency||''}</td>
-        <td>${r.doc_url? `<a href="${r.doc_url}" target="_blank">bản tin</a>`:''}${r.data_url? ` · <a href="${r.data_url}" target="_blank">số liệu</a>`:''}</td>
+        <td>
+          <div>${fmtDate(r.published_on)}</div>
+          <div class="muted">Đăng lúc: ${fmtDateTime(r.created_at)}</div>
+        </td>
+        <td>${r.title || ''}</td>
+        <td>${r.frequency || ''}</td>
+        <td>
+          ${r.doc_url? `<a href="${r.doc_url}" target="_blank">bản tin</a>`:''}
+          ${r.data_url? ` · <a href="${r.data_url}" target="_blank">số liệu</a>`:''}
+        </td>
         <td>${r.is_active ? 'Hiển thị' : '<span class="muted">Ẩn</span>'}</td>
         <td class="actions">
           <button class="btn" data-act="toggle" data-id="${r.id}" data-active="${r.is_active}">${r.is_active?'Ẩn':'Hiện'}</button>
@@ -212,8 +242,8 @@
     }
   }
 
-  // ===== Update / Delete (nhanh gọn) =====
-  document.getElementById('tbl').addEventListener('click', async (e)=>{
+  // ===== Update / Delete =====
+  els.tbl.addEventListener('click', async (e)=>{
     const btn = e.target.closest('button'); if (!btn) return;
     const id = btn.getAttribute('data-id');
     const act = btn.getAttribute('data-act');
