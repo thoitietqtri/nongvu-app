@@ -9,8 +9,8 @@
     :root{
       --bg:#f6f7ff; --card:#fff; --txt:#0f172a; --muted:#64748b; --pri:#4f46e5;
       --grid:#e2e8f0; --shadow:0 10px 30px -14px rgba(2,6,23,.18);
-      --border:#22c55e;           /* màu viền xanh lá như ảnh */
-      --left-width: 420px;        /* CHIỀU RỘNG KHUNG TRÁI (đổi số tuỳ ý) */
+      --border:#22c55e;           /* màu viền xanh */
+      --left-width: 420px;        /* CHIỀU RỘNG KHUNG TRÁI */
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -18,7 +18,7 @@
 
     .wrap{max-width:1400px;margin:18px auto;padding:0 12px}
     header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-    h1{margin:0;font-size:32px;font-weight:800;letter-spacing:.3px}
+    h1{margin:0;font-size:28px;font-weight:800;letter-spacing:.3px}
     .admin-link{padding:10px 14px;border-radius:12px;background:#f3e8ff;border:1px solid #ead8ff;text-decoration:none;color:#6d28d9}
 
     /* thanh lọc */
@@ -26,16 +26,9 @@
     .bar > *{padding:10px 12px;border:1px solid var(--grid);border-radius:14px;background:#fff}
 
     /* layout 2 khung */
-    .split{
-      display:grid; grid-template-columns: var(--left-width) 1fr;
-      gap:0; height: calc(100vh - 150px); /* trừ phần header + bar */
-    }
-    .pane{
-      background:var(--card);
-      border:4px solid var(--border);   /* viền xanh như ảnh */
-      overflow:auto;                    /* có dọc & ngang */
-    }
-    .pane + .pane{border-left:0}        /* đường chung ở giữa */
+    .split{display:grid; grid-template-columns: var(--left-width) 1fr; gap:0; height: calc(100vh - 150px);}
+    .pane{background:var(--card); border:4px solid var(--border); overflow:auto;}
+    .pane + .pane{border-left:0}
     .left{padding:10px}
     .right{display:flex;flex-direction:column;min-width:0}
 
@@ -54,6 +47,15 @@
     .viewer-area{position:relative;flex:1;min-height:300px}
     .docframe{width:100%;height:100%;border:0;display:block;background:#fff}
     .placeholder{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:#1f2937}
+
+    /* (1) Cho cuộn mượt dừng đúng đầu khung xem khi mobile */
+    #viewerPane{ scroll-margin-top: 12px; }
+
+    /* Responsive: mobile xếp chồng 2 khung */
+    @media (max-width: 880px){
+      .split{grid-template-columns:1fr; height:auto}
+      .right{height:70vh}
+    }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -61,7 +63,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>🧑‍🌾 🌿 TTNC QTTNVC - CEGORN 🌿 🧑‍🌾  |  BẢN TIN NÔNG VỤ</h1>
+    <h1>🧑‍🌾🌿 TTNC QTTNVC - CEGORN 🌿🧑‍🌾 | BẢN TIN NÔNG VỤ</h1>
     <a class="admin-link" href="./admin.html">Liên kết quản trị</a>
   </header>
 
@@ -102,8 +104,8 @@
 
 <script>
   // ===== Supabase (CHỈ ĐỌC) =====
-  const SUPABASE_URL = "https://bppqqbnaoxyqvycynfaj.supabase.co";   // ← THAY bằng Project URL thật
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcHFxYm5hb3h5cXZ5Y3luZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4MDQ4ODUsImV4cCI6MjA3NTM4MDg4NX0.GE0YNYgkVfsKT3iD9-jDm46PUIzkDtZFPP9Ec4iRcFA";                      // ← DÁN anon key
+  const SUPABASE_URL = "https://bppqqbnaoxyqvycynfaj.supabase.co";   // ← Điền Project URL thật
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwcHFxYm5hb3h5cXZ5Y3luZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4MDQ4ODUsImV4cCI6MjA3NTM4MDg4NX0.GE0YNYgkVfsKT3iD9-jDm46PUIzkDtZFPP9Ec4iRcFA";                      // ← Dán anon key
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ===== DOM =====
@@ -131,6 +133,14 @@
 
   let currentUrl = null;
 
+  /* (2) Hàm cuộn xuống khung xem nếu đang ở mobile */
+  function scrollToViewerIfMobile() {
+    if (window.matchMedia('(max-width: 880px)').matches) {
+      document.getElementById('viewerPane')
+        .scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
   function showInViewer(url){
     currentUrl = url;
     els.fileName.textContent = url ? baseName(url) : '';
@@ -143,20 +153,24 @@
     document.querySelectorAll('.item').forEach(el=>el.classList.remove('selected'));
 
     if (isPdf(url)){
-      // PDF nhúng trực tiếp (iframe có thanh cuộn riêng)
+      // PDF nhúng trực tiếp (nhiều trình duyệt mobile vẫn hỗ trợ)
       const src = `${url}#toolbar=1&navpanes=1&view=FitH`;
       els.viewer.innerHTML = `<iframe class="docframe" src="${src}"></iframe>`;
+      scrollToViewerIfMobile();     // (3) Tự cuộn xuống khung xem
     } else if (isOffice(url)){
       // DOC/XLS/PPT dùng Office viewer
       const enc = encodeURIComponent(url);
       els.viewer.innerHTML = `<iframe class="docframe" src="https://view.officeapps.live.com/op/embed.aspx?src=${enc}" referrerpolicy="no-referrer"></iframe>`;
+      scrollToViewerIfMobile();     // (3)
     } else if (isImage(url)){
       els.viewer.innerHTML = `<div style="width:100%;height:100%;overflow:auto"><img src="${url}" style="max-width:100%;height:auto;display:block"/></div>`;
+      scrollToViewerIfMobile();     // (3)
     } else {
       els.viewer.innerHTML = `<div class="placeholder"><div>
         <div style="font-weight:700;margin-bottom:8px">Không xem trước được định dạng này.</div>
         <a class="btn primary" href="${url}" target="_blank">Mở/Tải tệp</a>
       </div></div>`;
+      scrollToViewerIfMobile();     // (3)
     }
   }
 
@@ -208,8 +222,10 @@
       };
       els.list.appendChild(card);
 
-      // Tự mở bản mới nhất (nếu có doc_url)
-      if (idx===0 && it.doc_url){ showInViewer(it.doc_url); card.classList.add('selected'); }
+      // Tự mở bản mới nhất (nếu có doc_url) trên desktop
+      if (idx===0 && it.doc_url && !window.matchMedia('(max-width: 880px)').matches){
+        showInViewer(it.doc_url); card.classList.add('selected');
+      }
     });
   }
 
